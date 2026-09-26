@@ -1,0 +1,10 @@
+{
+  "extends": "../../packages/config/jsconfig.base.json",
+  "include": [
+    "src/**/*.js",
+    "prisma/**/*.js",
+    "scripts/**/*.js",
+    "tests/**/*.js",
+    "prisma.config.js"
+  ]
+}

@@ -36,6 +36,10 @@ export const ERROR_CODES = Object.freeze({
     httpStatus: 422,
     defaultMessage: "That email domain isn't supported yet.",
   },
+  PAYLOAD_TOO_LARGE: {
+    httpStatus: 413,
+    defaultMessage: 'The request body is too large.',
+  },
   INTERNAL: { httpStatus: 500, defaultMessage: 'Something went wrong. Please try again.' },
 });
 
@@ -68,10 +72,16 @@ export class AppError extends Error {
 
 /**
  * Builds the standard error envelope. The server attaches `requestId`
- * itself (from the request-scoped logger context) before sending.
+ * itself (from the request-scoped logger context) before sending — the
+ * return type declares it upfront (as optional) so that assignment
+ * type-checks at every call site instead of each one needing a cast.
  * @param {ErrorCode} code
  * @param {string} [message]
  * @param {Record<string, unknown>} [details]
+ * @returns {{
+ *   success: false;
+ *   error: { code: ErrorCode; message: string; details?: Record<string, unknown>; requestId?: string };
+ * }}
  */
 export function toErrorEnvelope(code, message, details) {
   const def = ERROR_CODES[code];

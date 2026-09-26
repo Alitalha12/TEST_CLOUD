@@ -1,0 +1,79 @@
+// Phase 1 scope only: tenancy + meta lookup tables (docs/architecture.md
+// §8.3 "Tenancy & identity" — the parts that don't depend on `users` yet).
+// Do NOT add `users`, `anonymous_profiles`, or any content table here —
+// those arrive in Phase 3/4/6+.
+//
+// Connection config moved out of this file in Prisma 7 — see
+// ../prisma.config.js and docs/adr/0010-prisma-7-driver-adapter.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UniversityStatus {
+  ACTIVE
+  PILOT
+  DISABLED
+
+  @@map("university_status")
+}
+
+model University {
+  id        String           @id @default(uuid(7))
+  slug      String           @unique
+  name      String
+  status    UniversityStatus @default(PILOT)
+  settings  Json             @default("{}")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  domains     UniversityDomain[]
+  departments Department[]
+
+  @@map("universities")
+}
+
+model UniversityDomain {
+  id           String   @id @default(uuid(7))
+  universityId String   @map("university_id")
+  domain       String   @unique
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@index([universityId])
+  @@map("university_domains")
+}
+
+model Department {
+  id           String   @id @default(uuid(7))
+  universityId String   @map("university_id")
+  name         String
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+
+  @@unique([universityId, name])
+  @@index([universityId, sortOrder])
+  @@map("departments")
+}
+
+model Interest {
+  id        String   @id @default(uuid(7))
+  slug      String   @unique
+  name      String
+  category  String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("interests")
+}

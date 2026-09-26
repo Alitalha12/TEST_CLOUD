@@ -89,8 +89,14 @@ module.exports = [
   // Exported so consuming configs can opt in per-directory:
   //   { files: ['apps/server/src/modules/**/*.js'],
   //     ignores: ['apps/server/src/modules/{auth,admin}/**'],
-  //     rules: { 'no-restricted-syntax': ['error', noIncludeUserOutsideAuthAdmin] } }
+  //     rules: { 'no-restricted-syntax': ['error', ...restrictedSyntaxRules, noIncludeUserOutsideAuthAdmin] } }
+  // NOTE: flat config REPLACES (doesn't merge) a rule's array value when
+  // the same rule key appears in a later matching config — an override
+  // that sets 'no-restricted-syntax' to only [noIncludeUserOutsideAuthAdmin]
+  // would silently drop the $queryRawUnsafe/dangerouslySetInnerHTML bans
+  // for those files. Always spread restrictedSyntaxRules back in too.
   { name: '@campus/config/no-include-user-rule', rules: {} },
 ];
 
+module.exports.restrictedSyntaxRules = restrictedSyntaxRules;
 module.exports.noIncludeUserOutsideAuthAdmin = noIncludeUserOutsideAuthAdmin;

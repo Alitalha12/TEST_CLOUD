@@ -10,11 +10,14 @@ university email but stay pseudonymous to other students.
 - Architecture decisions: [`docs/adr/`](./docs/adr/)
 
 This repo is being built **phase by phase** (see `docs/architecture.md`
-§28). Currently at: **Phase 0 — repository & tooling foundation.**
+§28). Completed: **Phase 0** (repository & tooling foundation), **Phase 1**
+(backend foundation — see `apps/server/README.md`). Phase 2 (mobile
+foundation) can start independently at any time; phases 3+ build on
+Phase 1.
 
 ## Prerequisites
 
-- Node.js 22 (see `.nvmrc`) — `nvm use`
+- Node.js 24 (see `.nvmrc`) — `nvm use`
 - [pnpm](https://pnpm.io/) 9.x (enabled via Corepack: `corepack enable`)
 - [Docker](https://www.docker.com/) + Docker Compose
 
@@ -33,6 +36,9 @@ Wait for all services to report healthy:
 ```bash
 docker compose ps
 ```
+
+Then set up the backend (migrations + seed data) — see
+[`apps/server/README.md`](./apps/server/README.md).
 
 ## Everyday commands
 
@@ -60,7 +66,8 @@ pnpm docker:logs        # tail local infra logs
 ```
 apps/
   mobile/     # Expo app — scaffolded in Phase 2
-  server/     # Express API + Socket.IO + worker — scaffolded in Phase 1
+  server/     # Express API — Phase 1 done; Socket.IO (Phase 8) and the
+              # BullMQ worker (Phase 3) land later. See apps/server/README.md.
   admin/      # Next.js admin dashboard — scaffolded in Phase 10
 packages/
   shared/     # @campus/shared — Zod schemas, enums, error codes, limits
