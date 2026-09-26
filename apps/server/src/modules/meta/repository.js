@@ -1,5 +1,5 @@
 // @ts-check
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '@campus/database';
 
 /**
  * Prisma queries only — always an explicit `select`, per

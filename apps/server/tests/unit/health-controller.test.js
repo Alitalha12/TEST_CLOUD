@@ -1,14 +1,14 @@
 // @ts-check
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ready } from '../../src/modules/health/controller.js';
-import { pingDatabase } from '../../src/lib/prisma.js';
+import { pingDatabase } from '@campus/database';
 import { pingRedis } from '../../src/lib/redis.js';
 
 // Mocked so this test covers the 503 "a dependency is down" branch
 // without needing to actually take down Postgres/Redis mid-test-run —
 // docs/architecture.md §28 P1 tests: "/ready (including 503 when a
 // dependency is unavailable)". vi.mock is hoisted above these imports.
-vi.mock('../../src/lib/prisma.js', () => ({ pingDatabase: vi.fn() }));
+vi.mock('@campus/database', () => ({ pingDatabase: vi.fn() }));
 vi.mock('../../src/lib/redis.js', () => ({ pingRedis: vi.fn() }));
 
 function createMockResponse() {

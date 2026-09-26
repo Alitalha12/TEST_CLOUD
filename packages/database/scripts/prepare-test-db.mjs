@@ -1,13 +1,15 @@
 // @ts-check
 import { spawnSync } from 'node:child_process';
 import pg from 'pg';
+import { loadServerEnv } from './load-env.mjs';
 
 /**
- * Runs once before the test suite (`pretest` npm script — see
- * package.json). Ensures `campus_test` exists and is migrated, so
- * integration tests run against a real, disposable Postgres database —
- * docs/conventions.md "Testing rules": "No mocking the database in
- * integration tests."
+ * Runs once before apps/server's test suite (its `pretest` script calls
+ * `pnpm --filter @campus/database run prepare-test-db` — see
+ * apps/server/package.json). Ensures `campus_test` exists and is
+ * migrated, so integration tests run against a real, disposable Postgres
+ * database — docs/conventions.md "Testing rules": "No mocking the
+ * database in integration tests."
  *
  * Deliberately a plain Node script (not a Vitest globalSetup) so it can
  * run once per `pnpm test` invocation regardless of how many test files
@@ -15,9 +17,13 @@ import pg from 'pg';
  * file never gets that far.
  */
 
+loadServerEnv();
+
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 if (!testDatabaseUrl) {
-  console.error('TEST_DATABASE_URL is not set. Copy .env.example to .env and try again.');
+  console.error(
+    'TEST_DATABASE_URL is not set. Copy apps/server/.env.example to apps/server/.env and try again.',
+  );
   process.exit(1);
 }
 

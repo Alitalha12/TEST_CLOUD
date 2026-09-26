@@ -1,5 +1,5 @@
 // @ts-check
-import { prisma, disconnectPrisma } from '../src/lib/prisma.js';
+import { prisma, disconnectPrisma } from '../src/client.js';
 
 /**
  * Seeds the target university, its email domain, a handful of

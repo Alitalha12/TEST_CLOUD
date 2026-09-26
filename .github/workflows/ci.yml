@@ -76,9 +76,10 @@ jobs:
       - name: Typecheck (JSDoc via tsc --noEmit; builds @campus/shared's declarations first)
         run: pnpm run typecheck
 
-      # apps/server's own `pretest` (scripts/prepare-test-db.mjs) creates
+      # apps/server's own `pretest` delegates to
+      # @campus/database's prepare-test-db script, which creates
       # campus_test and runs `prisma migrate deploy` against it before
-      # vitest runs — see apps/server/package.json.
+      # vitest runs — see apps/server/package.json and packages/database.
       - name: Test
         run: pnpm run test
 

@@ -3,7 +3,7 @@ import http from 'node:http';
 import { getEnv } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { createApp } from './app.js';
-import { disconnectPrisma } from './lib/prisma.js';
+import { disconnectPrisma } from '@campus/database';
 import { disconnectRedis } from './lib/redis.js';
 
 const env = getEnv();

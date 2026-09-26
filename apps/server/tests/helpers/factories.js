@@ -1,5 +1,5 @@
 // @ts-check
-import { prisma } from '../../src/lib/prisma.js';
+import { prisma } from '@campus/database';
 
 /** @param {string} prefix */
 function uniqueSlug(prefix) {

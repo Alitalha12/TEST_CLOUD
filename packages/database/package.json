@@ -1,0 +1,31 @@
+{
+  "name": "@campus/database",
+  "version": "0.0.0",
+  "private": true,
+  "description": "PostgreSQL schema, migrations, seed data and the Prisma client (docs/architecture.md §8)",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "pretypecheck": "pnpm run prisma:generate",
+    "typecheck": "tsc --noEmit -p jsconfig.json",
+    "prisma:generate": "node scripts/run-with-env.mjs pnpm exec prisma generate",
+    "prisma:migrate": "node scripts/run-with-env.mjs pnpm exec prisma migrate dev",
+    "prisma:deploy": "node scripts/run-with-env.mjs pnpm exec prisma migrate deploy",
+    "prisma:seed": "node scripts/run-with-env.mjs pnpm exec prisma db seed",
+    "prisma:studio": "node scripts/run-with-env.mjs pnpm exec prisma studio",
+    "preprepare-test-db": "pnpm run prisma:generate",
+    "prepare-test-db": "node scripts/prepare-test-db.mjs"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@campus/config": "workspace:*",
+    "@types/pg": "^8.23.1",
+    "prisma": "7.10.0",
+    "typescript": "^7.0.2"
+  }
+}

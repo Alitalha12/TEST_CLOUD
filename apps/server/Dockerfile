@@ -27,6 +27,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY apps/mobile/package.json apps/mobile/package.json
 COPY apps/server/package.json apps/server/package.json
 COPY apps/admin/package.json apps/admin/package.json
+COPY packages/database/package.json packages/database/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY packages/config/package.json packages/config/package.json
 RUN pnpm install --frozen-lockfile
@@ -38,8 +39,10 @@ COPY apps/server ./apps/server
 # `prisma generate` only needs the schema, not a live database — this
 # placeholder satisfies prisma.config.js's `datasource.url` resolution at
 # codegen time without requiring network access during the image build.
+# The Prisma schema/client now live in @campus/database (see
+# docs/adr/0011-separate-database-package.md), not @campus/server.
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
-RUN pnpm --filter @campus/server exec prisma generate
+RUN pnpm --filter @campus/database exec prisma generate
 
 # --- runtime: non-root, only what's needed to run the server ---
 FROM base AS runtime

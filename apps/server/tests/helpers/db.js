@@ -1,6 +1,5 @@
 // @ts-check
-import { Prisma } from '@prisma/client';
-import { prisma } from '../../src/lib/prisma.js';
+import { Prisma, prisma } from '@campus/database';
 
 /**
  * Every Phase-1 table, in no particular order — TRUNCATE ... CASCADE

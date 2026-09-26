@@ -1,5 +1,5 @@
 // @ts-check
-import { pingDatabase } from '../../lib/prisma.js';
+import { pingDatabase } from '@campus/database';
 import { pingRedis } from '../../lib/redis.js';
 import { sendSuccess } from '../../http/respond.js';
 
