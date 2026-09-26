@@ -10,10 +10,11 @@ university email but stay pseudonymous to other students.
 - Architecture decisions: [`docs/adr/`](./docs/adr/)
 
 This repo is being built **phase by phase** (see `docs/architecture.md`
-§28). Completed: **Phase 0** (repository & tooling foundation), **Phase 1**
-(backend foundation — see `apps/server/README.md`). Phase 2 (mobile
-foundation) can start independently at any time; phases 3+ build on
-Phase 1.
+§28). Completed: **Phase 0** (repository & tooling), **Phase 1** (backend
+foundation), **Phase 2** (mobile foundation), **Phase 3** (authentication —
+see `docs/phases/phase-3-auth.md`). See [`PROGRESS.md`](./PROGRESS.md) for
+exactly where things stand and how to resume. Next up: **Phase 4**
+(anonymous identity & profile).
 
 ## Prerequisites
 
@@ -65,12 +66,13 @@ pnpm docker:logs        # tail local infra logs
 
 ```
 apps/
-  mobile/     # Expo app — scaffolded in Phase 2
-  server/     # Express API — Phase 1 done; Socket.IO (Phase 8) and the
-              # BullMQ worker (Phase 3) land later. See apps/server/README.md.
+  mobile/     # Expo app — foundation (Phase 2) + auth screens (Phase 3)
+  server/     # Express API + BullMQ worker (worker.js). Socket.IO lands
+              # in Phase 8. See apps/server/README.md.
   admin/      # Next.js admin dashboard — scaffolded in Phase 10
 packages/
   shared/     # @campus/shared — Zod schemas, enums, error codes, limits
+  database/   # @campus/database — Prisma schema, migrations, seed, client
   config/     # @campus/config — shared ESLint/Prettier/jsconfig base
 docs/
   architecture.md   # the approved blueprint — binding
