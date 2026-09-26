@@ -1,0 +1,18 @@
+# CODEOWNERS
+# See docs/architecture.md §24 "Git / Team Workflow".
+#
+# Replace the GitHub usernames below with the team's actual handles before
+# relying on this for required reviews. Contract and schema changes affect
+# every consumer, so they require review from more than one lane.
+
+# Shared contract package — every consumer depends on this.
+/packages/shared/ @ali-talha @moeed-amir @rayan-ali
+
+# Database schema / migrations — reviewed by the architecture lead + backend owner.
+/apps/server/prisma/ @ali-talha @rayan-ali
+
+# Shared tooling config — affects every workspace.
+/packages/config/ @ali-talha @moeed-amir @rayan-ali
+
+# CI/CD and repo-wide config.
+/.github/ @ali-talha

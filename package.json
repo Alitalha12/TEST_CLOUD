@@ -1,0 +1,30 @@
+{
+  "name": "anonymous-campus",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Anonymous university social & chat platform — monorepo root",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "echo \"No app to run yet — apps/server lands in Phase 1, apps/mobile in Phase 2.\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "build:shared": "pnpm --filter @campus/shared run build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "@campus/config": "workspace:*",
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.9",
+    "typescript": "^7.0.2"
+  }
+}

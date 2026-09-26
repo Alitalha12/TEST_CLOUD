@@ -1,0 +1,7 @@
+{
+  "name": "@campus/admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Placeholder — scaffolded in Phase 10 (Moderation automation + Admin MVP). See docs/architecture.md §28 P10.",
+  "license": "UNLICENSED"
+}

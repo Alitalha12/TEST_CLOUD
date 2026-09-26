@@ -1,0 +1,4 @@
+{
+  "extends": "../config/jsconfig.base.json",
+  "include": ["src/**/*.js"]
+}

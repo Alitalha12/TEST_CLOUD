@@ -1,0 +1,79 @@
+name: campus
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: campus
+      POSTGRES_PASSWORD: campus
+      POSTGRES_DB: campus_dev
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U campus -d campus_dev']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # S3-compatible object storage standing in for Cloudflare R2 locally.
+  # (docs/architecture.md §10 Media Architecture)
+  #
+  # NOTE ON THE CHOICE OF IMAGE: the architecture doc says "MinIO locally".
+  # As of this writing, minio/minio's Docker image is no longer pullable
+  # anonymously on either Docker Hub or quay.io (MinIO Inc. now requires an
+  # account/license to pull it), and localstack/localstack now requires an
+  # auth token even for community/S3 features. Both were verified directly
+  # against the real registries while setting up Phase 0 — this isn't a
+  # local network issue. adobe/s3mock is a genuinely free, S3-API-compatible
+  # single-container mock with no login wall, so it's used here instead.
+  # This only affects local dev tooling: the storage client code in Phase 7
+  # talks to a plain S3-compatible endpoint and works unchanged against
+  # s3mock locally and Cloudflare R2 in staging/production. Revisit if
+  # MinIO's distribution situation changes.
+  s3:
+    image: adobe/s3mock:latest
+    restart: unless-stopped
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIALBUCKETS: campus-media-dev
+    ports:
+      - '9000:9090' # S3 API (kept on host port 9000 to match apps/server/.env.example)
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:9090/']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s # JVM boot time
+
+  # Fake SMTP server + web UI for reading OTP emails in development/CI,
+  # without sending real email. (docs/architecture.md §23.1 Local environment)
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI + API
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:8025/readyz']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:

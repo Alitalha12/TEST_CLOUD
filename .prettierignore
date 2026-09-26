@@ -1,0 +1,14 @@
+pnpm-lock.yaml
+pnpm-workspace.yaml
+
+# Prose documentation — hand-formatted, not run through Prettier's markdown
+# formatter (which would reflow tables and wrap lines in ways that hurt
+# readability of long architecture docs).
+*.md
+
+node_modules
+dist
+build
+coverage
+.expo
+.next

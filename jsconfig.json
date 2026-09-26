@@ -1,0 +1,5 @@
+{
+  "extends": "./packages/config/jsconfig.base.json",
+  "include": ["packages/**/*.js"],
+  "exclude": ["node_modules", "**/node_modules", "apps/**"]
+}
