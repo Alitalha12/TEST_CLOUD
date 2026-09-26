@@ -23,4 +23,20 @@ module.exports = [
       'no-restricted-syntax': ['error', ...restrictedSyntaxRules, noIncludeUserOutsideAuthAdmin],
     },
   },
+  // apps/mobile is React Native (Expo Router): its `.js` files use JSX and
+  // run on-device rather than under Node, so it needs its own parser
+  // options and globals instead of the base Node config's.
+  {
+    files: ['apps/mobile/**/*.js'],
+    languageOptions: {
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+      },
+      globals: {
+        // Metro/React Native's dev-mode global (docs/architecture.md §6.1
+        // "no secrets in the mobile app" comment; used to gate dev-only UI).
+        __DEV__: 'readonly',
+      },
+    },
+  },
 ];

@@ -28,5 +28,11 @@
     "eslint": "^10.11.0",
     "prettier": "^3.9.9",
     "typescript": "^7.0.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "react-native-worklets": "0.10.4",
+      "@react-native/metro-config": "0.86.3"
+    }
   }
 }
