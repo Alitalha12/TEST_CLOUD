@@ -11,7 +11,11 @@ import { prisma, disconnectPrisma } from '../src/client.js';
  */
 
 const UNIVERSITY = { slug: 'uet', name: 'University of Engineering and Technology' };
-const DOMAIN = 'uet.edu.pk';
+// The real domain, plus an obviously-fake one so a developer without a
+// real university inbox can still exercise the OTP flow locally against
+// Mailpit (docs/architecture.md §28 P3: "the default university has at
+// least one active domain"). Never add a fake domain to a non-dev seed.
+const DOMAINS = ['uet.edu.pk', 'test.local'];
 
 const DEPARTMENTS = [
   'Computer Science',
@@ -49,11 +53,13 @@ async function main() {
     create: { ...UNIVERSITY, status: 'PILOT' },
   });
 
-  await prisma.universityDomain.upsert({
-    where: { domain: DOMAIN },
-    update: { universityId: university.id, isActive: true },
-    create: { domain: DOMAIN, universityId: university.id, isActive: true },
-  });
+  for (const domain of DOMAINS) {
+    await prisma.universityDomain.upsert({
+      where: { domain },
+      update: { universityId: university.id, isActive: true },
+      create: { domain, universityId: university.id, isActive: true },
+    });
+  }
 
   for (const [index, name] of DEPARTMENTS.entries()) {
     await prisma.department.upsert({

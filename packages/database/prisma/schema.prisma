@@ -1,7 +1,8 @@
-// Phase 1 scope only: tenancy + meta lookup tables (docs/architecture.md
-// §8.3 "Tenancy & identity" — the parts that don't depend on `users` yet).
-// Do NOT add `users`, `anonymous_profiles`, or any content table here —
-// those arrive in Phase 3/4/6+.
+// Phase 1: tenancy + meta lookup tables. Phase 3 adds users/auth
+// (docs/architecture.md §8.3 "users", "user_identities",
+// "verification_challenges", "sessions", "banned_email_hashes",
+// "user_settings"). Do NOT add `anonymous_profiles` or any content table
+// here — those arrive in Phase 4/6+.
 //
 // Connection config moved out of this file in Prisma 7 — see
 // ../prisma.config.js and docs/adr/0010-prisma-7-driver-adapter.md.
@@ -33,6 +34,7 @@ model University {
 
   domains     UniversityDomain[]
   departments Department[]
+  users       User[]
 
   @@map("universities")
 }
@@ -76,4 +78,168 @@ model Interest {
 
   @@index([isActive])
   @@map("interests")
+}
+
+// --- Phase 3: auth (docs/architecture.md §11, §28 P3) ---
+//
+// D8: no real_name/phone/student-ID columns anywhere below — only an
+// encrypted email plus an HMAC hash of it. Data never collected can't leak.
+
+/** Mirrors packages/shared/src/enums.js AccountStatus (§8.3 `users.status`). */
+enum AccountStatus {
+  ACTIVE
+  RESTRICTED
+  SUSPENDED
+  BANNED
+  PENDING_DELETION
+  DELETED
+
+  @@map("account_status")
+}
+
+/** Mirrors packages/shared/src/enums.js Platform. */
+enum Platform {
+  ANDROID
+  IOS
+
+  @@map("platform")
+}
+
+/** Mirrors packages/shared/src/enums.js PushPreview (§8.3 `user_settings.push_preview`). */
+enum PushPreview {
+  NONE
+  SENDER_ONLY
+
+  @@map("push_preview")
+}
+
+/**
+ * The account row itself. **Never serialized** — `id` never leaves the
+ * server except inside the user's own JWT (§8.3 `users` privacy column).
+ * `role` and a verification challenge's `purpose` are plain strings, not
+ * enums, because each currently has exactly one real value ("USER",
+ * "LOGIN") reserved for future expansion — see §8.3's backtick-quoted
+ * single values.
+ */
+model User {
+  id              String        @id @default(uuid(7))
+  universityId    String        @map("university_id")
+  emailHash       String        @unique @map("email_hash")
+  status          AccountStatus @default(ACTIVE)
+  role            String        @default("USER")
+  restrictedUntil DateTime?     @map("restricted_until")
+  suspendedUntil  DateTime?     @map("suspended_until")
+  onboardedAt     DateTime?     @map("onboarded_at")
+  lastActiveAt    DateTime?     @map("last_active_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  deletedAt       DateTime?     @map("deleted_at")
+
+  university University    @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  identity   UserIdentity?
+  sessions   Session[]
+  settings   UserSetting?
+
+  @@index([universityId, status])
+  @@map("users")
+}
+
+/**
+ * The only place a real email lives. **Highly restricted**: read only by
+ * the auth module and (later) a break-glass admin flow (§8.3 privacy
+ * column, §11.4). `emailDomain` is stored in the clear specifically so it
+ * can be read/indexed without decrypting the full address.
+ */
+model UserIdentity {
+  userId          String   @id @map("user_id")
+  emailEncrypted  String   @map("email_encrypted")
+  emailKeyVersion Int      @map("email_key_version")
+  emailDomain     String   @map("email_domain")
+  verifiedAt      DateTime @map("verified_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_identities")
+}
+
+/**
+ * One row per `otp/request` call. Internal only; purged after 24h by a
+ * later-phase cleanup job (§8.3). Not linked to `users` by FK — a
+ * challenge can exist for an email that has no account yet (first login
+ * = signup, §11.2).
+ */
+model VerificationChallenge {
+  id          String    @id @default(uuid(7))
+  emailHash   String    @map("email_hash")
+  codeHash    String    @map("code_hash")
+  purpose     String    @default("LOGIN")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
+  expiresAt   DateTime  @map("expires_at")
+  consumedAt  DateTime? @map("consumed_at")
+  ipHash      String    @map("ip_hash")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([emailHash, createdAt(sort: Desc)])
+  @@map("verification_challenges")
+}
+
+/**
+ * A refresh-token family (§11.3). `refreshTokenHash` is a SHA-256 hash of
+ * the opaque 256-bit token the client holds — the plaintext token is
+ * never stored. `familyId` is shared across every token in a rotation
+ * chain, so reuse of an already-rotated token can revoke the whole chain.
+ */
+model Session {
+  id               String    @id @default(uuid(7))
+  userId           String    @map("user_id")
+  familyId         String    @map("family_id")
+  refreshTokenHash String    @unique @map("refresh_token_hash")
+  platform         Platform
+  deviceLabel      String    @map("device_label")
+  appVersion       String    @map("app_version")
+  ipHash           String    @map("ip_hash")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  lastUsedAt       DateTime  @default(now()) @map("last_used_at")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  revokeReason     String?   @map("revoke_reason")
+  replacedById     String?   @map("replaced_by_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([familyId])
+  @@map("sessions")
+}
+
+/**
+ * Enforces a ban even after the account behind it is deleted (§8.3,
+ * §11.7 "Deletion": "Delete `user_identities` **unless** the user was
+ * banned (then keep `banned_email_hashes` only)"). Never linked by FK to
+ * `users` — it must outlive the account row.
+ */
+model BannedEmailHash {
+  emailHash  String   @id @map("email_hash")
+  reason     String?
+  sanctionId String?  @map("sanction_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("banned_email_hashes")
+}
+
+/**
+ * Created alongside the user in the same signup transaction so the
+ * relation is never nullable-in-practice — no endpoint reads/writes this
+ * yet (that starts once a settings screen exists, post-P3).
+ */
+model UserSetting {
+  userId            String      @id @map("user_id")
+  notificationPrefs Json        @default("{}") @map("notification_prefs")
+  pushPreview       PushPreview @default(SENDER_ONLY) @map("push_preview")
+  theme             String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }
