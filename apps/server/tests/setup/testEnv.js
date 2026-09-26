@@ -21,3 +21,14 @@ process.env.NODE_ENV = 'test';
 if (process.env.TEST_DATABASE_URL) {
   process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 }
+
+// Same reasoning for Redis (Phase 3 onward): rate limits, the account
+// status cache, and the OTP pending-challenge cache all live in Redis
+// now, so tests need their own logical database — never the same one a
+// running `pnpm dev` server/worker is using — or test runs would leak
+// rate-limit counters into each other and into a developer's live
+// session. A different numbered Redis DB on the same server (not a
+// second container) is the lightest way to get that isolation.
+if (process.env.TEST_REDIS_URL) {
+  process.env.REDIS_URL = process.env.TEST_REDIS_URL;
+}

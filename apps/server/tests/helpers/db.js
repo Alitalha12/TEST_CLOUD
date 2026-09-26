@@ -2,12 +2,24 @@
 import { Prisma, prisma } from '@campus/database';
 
 /**
- * Every Phase-1 table, in no particular order — TRUNCATE ... CASCADE
- * handles FK ordering. Extend this list as new tables are added in later
- * phases (docs/conventions.md "Testing rules": "The DB is reset per file
- * via transactions/truncate").
+ * Every table, in no particular order — TRUNCATE ... CASCADE handles FK
+ * ordering. Extend this list as new tables are added in later phases
+ * (docs/conventions.md "Testing rules": "The DB is reset per file via
+ * transactions/truncate").
  */
-const TABLES = ['departments', 'university_domains', 'universities', 'interests'];
+const TABLES = [
+  'departments',
+  'university_domains',
+  'universities',
+  'interests',
+  // Phase 3 (auth):
+  'user_settings',
+  'sessions',
+  'user_identities',
+  'users',
+  'verification_challenges',
+  'banned_email_hashes',
+];
 
 /**
  * Truncates all known tables and restarts identity sequences. Table

@@ -33,3 +33,10 @@ export function toDepartmentDTO(row) {
 export function toDepartmentListDTO(rows) {
   return rows.map(toDepartmentDTO);
 }
+
+/**
+ * @param {{ minAppVersion: string; latestAppVersion: string }} config
+ */
+export function toAppConfigDTO(config) {
+  return { minAppVersion: config.minAppVersion, latestAppVersion: config.latestAppVersion };
+}

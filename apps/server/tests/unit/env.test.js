@@ -5,6 +5,14 @@ import { loadEnv } from '../../src/config/env.js';
 const VALID_ENV = {
   DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
   REDIS_URL: 'redis://localhost:6379',
+  // Phase 3 auth secrets — dummy-but-valid-shape values for this test file only.
+  EMAIL_HASH_PEPPER: 'a-test-pepper-at-least-16-chars',
+  EMAIL_ENC_KEY: Buffer.alloc(32, 1).toString('base64'),
+  JWT_ACCESS_SECRET: 'a-test-jwt-secret-at-least-32-characters-long',
+  JWT_KID: 'test-key-1',
+  SMTP_HOST: 'localhost',
+  SMTP_PORT: '1025',
+  SMTP_FROM: 'Test <no-reply@localhost>',
 };
 
 describe('loadEnv', () => {

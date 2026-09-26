@@ -1,7 +1,7 @@
 // @ts-check
 import { sendSuccess } from '../../http/respond.js';
 import * as service from './service.js';
-import { toDepartmentListDTO, toInterestListDTO } from './presenter.js';
+import { toAppConfigDTO, toDepartmentListDTO, toInterestListDTO } from './presenter.js';
 
 /**
  * HTTP ⇄ service translation only — no Prisma, no business rules, per
@@ -25,4 +25,9 @@ export const listDepartments = async (req, res) => {
   const { universitySlug } = /** @type {{ universitySlug?: string }} */ (req.query);
   const departments = await service.getDepartments(universitySlug);
   sendSuccess(res, toDepartmentListDTO(departments));
+};
+
+/** @type {import('express').RequestHandler} */
+export const getAppConfig = async (req, res) => {
+  sendSuccess(res, toAppConfigDTO(service.getAppConfig()));
 };

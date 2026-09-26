@@ -24,6 +24,34 @@ const EnvSchema = z.object({
   // Never treat an empty/missing value as "allow everything" — see
   // buildCorsOrigins below and docs/architecture.md §20 "API hardening".
   CORS_ALLOWED_ORIGINS: z.string().optional().default(''),
+
+  // --- Phase 3: auth (docs/architecture.md §11) ---
+  // Secret pepper for HMAC-SHA256(email) — never derivable from the DB
+  // alone, so a leaked database dump can't be used to brute-force which
+  // email hashes to a given users.email_hash row.
+  EMAIL_HASH_PEPPER: z.string().min(16, 'EMAIL_HASH_PEPPER must be at least 16 characters'),
+  // Base64-encoded 32-byte (256-bit) AES-256-GCM key for user_identities.email_encrypted.
+  EMAIL_ENC_KEY: z.string().refine((value) => {
+    try {
+      return Buffer.from(value, 'base64').length === 32;
+    } catch {
+      return false;
+    }
+  }, 'EMAIL_ENC_KEY must be a base64-encoded 32-byte key'),
+  // HS256 signing secret for access JWTs. JWT_KID (any short identifier)
+  // is embedded in the token header so a future secret rotation can be
+  // distinguished — the value has no format requirement of its own.
+  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
+  JWT_KID: z.string().min(1),
+
+  // OTP email delivery (Mailpit locally, a real provider on staging/prod).
+  SMTP_HOST: z.string().min(1),
+  SMTP_PORT: z.coerce.number().int().positive(),
+  SMTP_FROM: z.string().min(1),
+
+  // Enforced by the minAppVersion middleware (§7.4 "Min app version").
+  MIN_APP_VERSION: z.string().min(1).default('1.0.0'),
+  LATEST_APP_VERSION: z.string().min(1).default('1.0.0'),
 });
 
 /**
@@ -47,11 +75,21 @@ export function loadEnv(rawEnv = process.env) {
     REDIS_URL: rawEnv.REDIS_URL,
     LOG_LEVEL: rawEnv.LOG_LEVEL,
     CORS_ALLOWED_ORIGINS: rawEnv.CORS_ALLOWED_ORIGINS,
+    EMAIL_HASH_PEPPER: rawEnv.EMAIL_HASH_PEPPER,
+    EMAIL_ENC_KEY: rawEnv.EMAIL_ENC_KEY,
+    JWT_ACCESS_SECRET: rawEnv.JWT_ACCESS_SECRET,
+    JWT_KID: rawEnv.JWT_KID,
+    SMTP_HOST: rawEnv.SMTP_HOST,
+    SMTP_PORT: rawEnv.SMTP_PORT,
+    SMTP_FROM: rawEnv.SMTP_FROM,
+    MIN_APP_VERSION: rawEnv.MIN_APP_VERSION,
+    LATEST_APP_VERSION: rawEnv.LATEST_APP_VERSION,
   });
 
   if (!result.success) {
     // Never log rawEnv itself — it may contain DATABASE_URL/REDIS_URL
-    // credentials. Only the field names and validation issues are safe.
+    // credentials, the JWT signing secret, or the email encryption key.
+    // Only the field names and validation issues are safe.
     const issues = result.error.issues
       .map((issue) => `  - ${issue.path.join('.') || '(root)'}: ${issue.message}`)
       .join('\n');

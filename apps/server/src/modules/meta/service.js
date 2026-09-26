@@ -1,4 +1,5 @@
 // @ts-check
+import { getEnv } from '../../config/env.js';
 import * as repository from './repository.js';
 
 export async function getInterests() {
@@ -22,4 +23,13 @@ export async function getDepartments(universitySlug) {
   }
 
   return repository.findDepartmentsByUniversityId(university.id);
+}
+
+/**
+ * `GET /meta/app-config` (docs/architecture.md §7.4 "Min app version").
+ * These are process config, not a DB row — no repository call needed.
+ */
+export function getAppConfig() {
+  const env = getEnv();
+  return { minAppVersion: env.MIN_APP_VERSION, latestAppVersion: env.LATEST_APP_VERSION };
 }

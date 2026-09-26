@@ -60,15 +60,43 @@ export function rateLimit(limitName, keyFn) {
     return limiter
       .consume(key)
       .then(() => next())
-      .catch(() => {
+      .catch((/** @type {unknown} */ rejection) => {
         // rate-limiter-flexible rejects with a RateLimiterRes (not
         // necessarily an Error) both when the limit is exceeded AND on a
         // Redis-level failure — this fails CLOSED (blocks the request) in
         // both cases. Revisit if a Redis outage should instead fail open
         // for low-stakes routes once real routes use this in Phase 3+.
-        next(new AppError('RATE_LIMITED'));
+        // When it IS a RateLimiterRes, it carries `msBeforeNext` — surfaced
+        // as `retryAfterSeconds` so the client can show a countdown
+        // instead of a bare "try again later".
+        const msBeforeNext = /** @type {{ msBeforeNext?: number }} */ (rejection)?.msBeforeNext;
+        const details =
+          typeof msBeforeNext === 'number'
+            ? { retryAfterSeconds: Math.ceil(msBeforeNext / 1000) }
+            : undefined;
+        next(new AppError('RATE_LIMITED', undefined, details));
       });
   };
+}
+
+/**
+ * Consumes one point of the named limit directly, for the rare case a
+ * limit's key isn't derivable until partway through a service function
+ * (e.g. `OTP_VERIFY_ATTEMPTS` is keyed by `emailHash`, which the verify
+ * request body doesn't carry — only the service, after loading the
+ * challenge, knows it). Prefer the `rateLimit()` middleware whenever the
+ * key is available directly from the request.
+ * @param {keyof typeof RATE_LIMITS} limitName
+ * @param {string} key
+ * @returns {Promise<boolean>} true if allowed, false if the limit was hit
+ */
+export async function checkRateLimit(limitName, key) {
+  try {
+    await getLimiter(limitName).consume(key);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Test/shutdown helper — clears cached limiter instances. */

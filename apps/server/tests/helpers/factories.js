@@ -46,3 +46,79 @@ export function createInterest(overrides = {}) {
     },
   });
 }
+
+/**
+ * @param {string} universityId
+ * @param {{ domain?: string; isActive?: boolean }} [overrides]
+ */
+export function createUniversityDomain(universityId, overrides = {}) {
+  return prisma.universityDomain.create({
+    data: {
+      universityId,
+      domain: overrides.domain ?? `${uniqueSlug('domain')}.edu`,
+      isActive: overrides.isActive ?? true,
+    },
+  });
+}
+
+/**
+ * @param {{ emailHash: string; reason?: string }} params
+ */
+export function createBannedEmailHash({ emailHash, reason }) {
+  return prisma.bannedEmailHash.create({
+    data: { emailHash, reason: reason ?? 'test-ban' },
+  });
+}
+
+/**
+ * @param {{
+ *   universityId: string;
+ *   emailHash?: string;
+ *   status?: 'ACTIVE' | 'RESTRICTED' | 'SUSPENDED' | 'BANNED' | 'PENDING_DELETION' | 'DELETED';
+ *   onboardedAt?: Date | null;
+ * }} params
+ */
+export function createUser({ universityId, emailHash, status, onboardedAt }) {
+  return prisma.user.create({
+    data: {
+      universityId,
+      emailHash: emailHash ?? uniqueSlug('email-hash'),
+      status: status ?? 'ACTIVE',
+      onboardedAt: onboardedAt ?? null,
+    },
+  });
+}
+
+/**
+ * @param {{
+ *   userId: string;
+ *   familyId?: string;
+ *   refreshTokenHash: string;
+ *   expiresAt?: Date;
+ *   revokedAt?: Date | null;
+ *   replacedById?: string | null;
+ * }} params
+ */
+export function createSession({
+  userId,
+  familyId,
+  refreshTokenHash,
+  expiresAt,
+  revokedAt,
+  replacedById,
+}) {
+  return prisma.session.create({
+    data: {
+      userId,
+      familyId: familyId ?? uniqueSlug('family'),
+      refreshTokenHash,
+      platform: 'ANDROID',
+      deviceLabel: 'Test Device',
+      appVersion: '1.0.0',
+      ipHash: 'test-ip-hash',
+      expiresAt: expiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      revokedAt: revokedAt ?? null,
+      replacedById: replacedById ?? null,
+    },
+  });
+}

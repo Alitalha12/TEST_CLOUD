@@ -5,6 +5,7 @@ import { logger } from './lib/logger.js';
 import { createApp } from './app.js';
 import { disconnectPrisma } from '@campus/database';
 import { disconnectRedis } from './lib/redis.js';
+import { disconnectQueueConnection } from './lib/queueConnection.js';
 
 const env = getEnv();
 const app = createApp({ env, logger });
@@ -43,6 +44,7 @@ function shutdown(signal) {
     try {
       await disconnectPrisma();
       await disconnectRedis();
+      await disconnectQueueConnection();
     } catch (disconnectErr) {
       logger.error({ err: disconnectErr }, 'Error while closing DB/Redis connections');
     } finally {

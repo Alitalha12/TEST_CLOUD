@@ -12,3 +12,4 @@ metaRouter.get(
   validate({ query: ListDepartmentsQuerySchema }),
   controller.listDepartments,
 );
+metaRouter.get('/app-config', controller.getAppConfig);

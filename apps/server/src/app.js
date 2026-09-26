@@ -6,7 +6,7 @@ import pinoHttp from 'pino-http';
 import { requestId } from './middleware/requestId.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
-import { router } from './routes.js';
+import { createRouter } from './routes.js';
 
 /**
  * Builds the Express app. A factory (not a module-level singleton) so
@@ -53,7 +53,7 @@ export function createApp({ env, logger }) {
     }),
   );
 
-  app.use(router);
+  app.use(createRouter(env));
 
   app.use(notFound);
   app.use(errorHandler(env));
