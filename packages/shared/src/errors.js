@@ -21,6 +21,10 @@ export const ERROR_CODES = Object.freeze({
   VALIDATION_ERROR: { httpStatus: 422, defaultMessage: 'The request could not be validated.' },
   UNAUTHENTICATED: { httpStatus: 401, defaultMessage: 'You need to be logged in to do that.' },
   TOKEN_EXPIRED: { httpStatus: 401, defaultMessage: 'Your session has expired.' },
+  INVALID_CODE: {
+    httpStatus: 400,
+    defaultMessage: 'That code is incorrect or has expired.',
+  },
   FORBIDDEN: { httpStatus: 403, defaultMessage: "You can't do that." },
   NOT_FOUND: { httpStatus: 404, defaultMessage: 'Not found.' },
   RATE_LIMITED: { httpStatus: 429, defaultMessage: "You're doing that too much. Try again later." },
