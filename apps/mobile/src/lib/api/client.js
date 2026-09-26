@@ -1,6 +1,18 @@
 // @ts-check
 import axios from 'axios';
+import Constants from 'expo-constants';
 import { getPublicEnv } from '../../config/env.js';
+
+/**
+ * The app's own release version, from `app.config.js`'s `version` field
+ * (surfaced at runtime via `expo-constants`) — sent as `X-App-Version` on
+ * every request so the server's `minAppVersion` middleware can enforce
+ * docs/architecture.md §7.4 "Min app version". Falls back to `0.0.0`
+ * (always "too old") rather than omitting the header if Constants
+ * somehow has no version at all — failing toward "please update" is
+ * safer than failing toward "assume current".
+ */
+const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 
 /**
  * Normalized error thrown by every call through the API client, in place
@@ -82,9 +94,10 @@ export function createApiClient({ tokenProvider = stubAuthTokenProvider, ...axio
   });
 
   instance.interceptors.request.use((config) => {
+    config.headers = config.headers ?? {};
+    config.headers['X-App-Version'] = APP_VERSION;
     const token = tokenProvider.getAccessToken();
     if (token) {
-      config.headers = config.headers ?? {};
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -132,4 +145,32 @@ export function createApiClient({ tokenProvider = stubAuthTokenProvider, ...axio
   return instance;
 }
 
-export const apiClient = createApiClient();
+/**
+ * `apiClient`'s provider starts as the stub and is swapped for the real
+ * SecureStore-backed one (features/auth/tokenProvider.js) once at app
+ * bootstrap, via `setApiClientTokenProvider`. This file never imports
+ * that module directly: `tokenProvider.js` needs `features/auth/api.js`,
+ * which needs `apiClient` from HERE — importing it back would be a
+ * circular import. Delegating through a mutable holder instead lets the
+ * real provider be installed from outside without one.
+ * @type {AuthTokenProvider}
+ */
+let activeTokenProvider = stubAuthTokenProvider;
+
+/** @type {AuthTokenProvider} */
+const delegatingTokenProvider = {
+  getAccessToken: () => activeTokenProvider.getAccessToken(),
+  refreshAccessToken: () => activeTokenProvider.refreshAccessToken(),
+  onRefreshFailure: () => activeTokenProvider.onRefreshFailure(),
+};
+
+export const apiClient = createApiClient({ tokenProvider: delegatingTokenProvider });
+
+/**
+ * Installs the real token provider. Call once, as early as possible at
+ * app startup (before `useSessionStore`'s `bootstrap()` runs).
+ * @param {AuthTokenProvider} provider
+ */
+export function setApiClientTokenProvider(provider) {
+  activeTokenProvider = provider;
+}

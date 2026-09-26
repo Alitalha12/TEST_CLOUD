@@ -13,6 +13,8 @@ const FRIENDLY_MESSAGES = {
   NETWORK_ERROR: 'Could not reach the server. Check your connection and try again.',
   RATE_LIMITED: "You're doing that too much — try again in a bit.",
   UPGRADE_REQUIRED: 'Please update the app to continue.',
+  DOMAIN_NOT_SUPPORTED: "We don't recognize that email domain yet. Double-check for a typo.",
+  INVALID_CODE: 'That code is incorrect or has expired. Check it and try again.',
 };
 
 const GENERIC_MESSAGE = 'Something went wrong. Please try again.';

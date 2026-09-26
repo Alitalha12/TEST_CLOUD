@@ -105,6 +105,55 @@ describe('createApiClient', () => {
     expect(callCount).toBe(2);
   });
 
+  it('single-flight: 3 concurrent 401s trigger exactly one refreshAccessToken call', async () => {
+    let refreshCallCount = 0;
+    let refreshed = false;
+
+    const client = createApiClient({
+      baseURL: 'http://test.local',
+      tokenProvider: {
+        getAccessToken: () => (refreshed ? 'fresh-token' : 'stale-token'),
+        refreshAccessToken: async () => {
+          refreshCallCount += 1;
+          // Simulate real network latency so all three requests' 401s
+          // land while the single refresh is still in flight — this is
+          // exactly the race the single-flight guard exists for.
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          refreshed = true;
+        },
+        onRefreshFailure: () => {},
+      },
+      adapter: async (config) => {
+        if (config.headers?.Authorization === 'Bearer stale-token') {
+          const error = /** @type {any} */ (new Error('Unauthorized'));
+          error.response = {
+            status: 401,
+            data: { success: false, error: { code: 'TOKEN_EXPIRED', message: 'Expired' } },
+            config,
+          };
+          error.config = config;
+          throw error;
+        }
+        return {
+          data: { success: true, data: 'ok' },
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config,
+        };
+      },
+    });
+
+    const results = await Promise.all([
+      client.get('/one'),
+      client.get('/two'),
+      client.get('/three'),
+    ]);
+
+    expect(results).toEqual(['ok', 'ok', 'ok']);
+    expect(refreshCallCount).toBe(1);
+  });
+
   it('surfaces the normalized error when the refresh itself fails', async () => {
     const client = createApiClient({
       baseURL: 'http://test.local',

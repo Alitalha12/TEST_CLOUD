@@ -45,7 +45,11 @@ const variant = VARIANT_CONFIG[APP_VARIANT] ?? VARIANT_CONFIG.development;
 module.exports = {
   name: variant.name,
   slug: 'anonymous-campus',
-  version: '0.1.0',
+  // Kept aligned with apps/server's MIN_APP_VERSION/LATEST_APP_VERSION
+  // defaults ("1.0.0") — a mismatch here means the app gets 426
+  // UPGRADE_REQUIRED against a correctly-configured local backend for no
+  // real reason (docs/architecture.md §7.4 "Min app version").
+  version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   scheme: variant.scheme,
