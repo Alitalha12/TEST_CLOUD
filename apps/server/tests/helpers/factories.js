@@ -78,14 +78,24 @@ export function createBannedEmailHash({ emailHash, reason }) {
  *   onboardedAt?: Date | null;
  * }} params
  */
-export function createUser({ universityId, emailHash, status, onboardedAt }) {
-  return prisma.user.create({
-    data: {
-      universityId,
-      emailHash: emailHash ?? uniqueSlug('email-hash'),
-      status: status ?? 'ACTIVE',
-      onboardedAt: onboardedAt ?? null,
-    },
+export async function createUser({ universityId, emailHash, status, onboardedAt }) {
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        universityId,
+        emailHash: emailHash ?? uniqueSlug('email-hash'),
+        status: status ?? 'ACTIVE',
+        onboardedAt: onboardedAt ?? null,
+      },
+    });
+    // Every real user gets a `user_settings` row in the same transaction
+    // as signup (apps/server/src/modules/auth/repository.js
+    // `createUserWithIdentityAndSettings`) — mirrored here so a factory
+    // user matches that invariant too (Phase 4's `/me/settings` throws
+    // if it's ever missing, by design; see modules/profiles/service.js
+    // `getSettings`).
+    await tx.userSetting.create({ data: { userId: user.id } });
+    return user;
   });
 }
 

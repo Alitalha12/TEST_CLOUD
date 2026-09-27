@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { healthRouter } from './modules/health/routes.js';
 import { metaRouter } from './modules/meta/routes.js';
 import { authRouter } from './modules/auth/routes.js';
+import { createProfilesRouter } from './modules/profiles/routes.js';
 import * as authController from './modules/auth/controller.js';
 import { authenticate } from './middleware/authenticate.js';
 import { requireAccountState } from './middleware/requireAccountState.js';
@@ -34,6 +35,10 @@ export function createRouter(env) {
   router.use('/api/v1/meta', metaRouter);
   router.use('/api/v1/auth', requireCurrentApp, authRouter);
   router.get('/api/v1/me', requireCurrentApp, authenticate, requireAccountState, authController.me);
+  // No `requireCurrentApp` at this mount point — see
+  // modules/profiles/routes.js's doc comment for why it's applied
+  // per-route inside `createProfilesRouter` instead.
+  router.use('/api/v1', createProfilesRouter(env));
 
   return router;
 }
