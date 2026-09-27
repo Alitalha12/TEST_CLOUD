@@ -27,8 +27,8 @@ describe('GET /api/v1/meta/interests', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data).toEqual(
       expect.arrayContaining([
-        { slug: 'ai-ml', name: 'AI/ML', category: 'Technology' },
-        { slug: 'gaming', name: 'Gaming', category: 'Entertainment' },
+        { id: expect.any(String), slug: 'ai-ml', name: 'AI/ML', category: 'Technology' },
+        { id: expect.any(String), slug: 'gaming', name: 'Gaming', category: 'Entertainment' },
       ]),
     );
     // The inactive interest must never appear.

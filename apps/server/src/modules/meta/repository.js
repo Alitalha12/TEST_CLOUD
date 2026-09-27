@@ -10,7 +10,7 @@ import { prisma } from '@campus/database';
 export function findActiveInterests() {
   return prisma.interest.findMany({
     where: { isActive: true },
-    select: { slug: true, name: true, category: true },
+    select: { id: true, slug: true, name: true, category: true },
     orderBy: [{ category: 'asc' }, { name: 'asc' }],
   });
 }

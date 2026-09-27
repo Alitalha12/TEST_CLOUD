@@ -7,14 +7,17 @@
  */
 
 /**
- * @param {{ slug: string; name: string; category: string | null }} row
+ * @param {{ id: string; slug: string; name: string; category: string | null }} row
  */
 export function toInterestDTO(row) {
-  return { slug: row.slug, name: row.name, category: row.category };
+  // `id` included from Phase 4 onward (docs/phases/phase-4-identity.md):
+  // it's how a client says which interests it wants back in
+  // `PUT /me/interests`/`POST /me/profile`'s `interestIds`.
+  return { id: row.id, slug: row.slug, name: row.name, category: row.category };
 }
 
 /**
- * @param {Array<{ slug: string; name: string; category: string | null }>} rows
+ * @param {Array<{ id: string; slug: string; name: string; category: string | null }>} rows
  */
 export function toInterestListDTO(rows) {
   return rows.map(toInterestDTO);

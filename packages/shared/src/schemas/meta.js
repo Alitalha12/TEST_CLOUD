@@ -14,6 +14,15 @@ import { z } from 'zod';
  */
 
 export const InterestSchema = z.object({
+  // Optional (added in Phase 4, docs/architecture.md §28 P4): the meta
+  // module's own list includes it so a client has something to submit
+  // back as `PUT /me/interests`/`POST /me/profile`'s `interestIds`
+  // (docs/phases/phase-4-identity.md) — harmless to expose, since
+  // `interests` is a public lookup table, not `users`/`user_identities`
+  // (§11.5). Left optional rather than required so an *embedded* interest
+  // list (a profile's own `interests`, which never needed it before) isn't
+  // forced to start populating it too.
+  id: z.string().optional(),
   slug: z.string(),
   name: z.string(),
   category: z.string().nullable(),
