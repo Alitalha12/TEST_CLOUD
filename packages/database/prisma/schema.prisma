@@ -1,8 +1,9 @@
 // Phase 1: tenancy + meta lookup tables. Phase 3 adds users/auth
 // (docs/architecture.md §8.3 "users", "user_identities",
 // "verification_challenges", "sessions", "banned_email_hashes",
-// "user_settings"). Do NOT add `anonymous_profiles` or any content table
-// here — those arrive in Phase 4/6+.
+// "user_settings"). Phase 4 adds the persona tables ("anonymous_profiles",
+// "profile_name_history", "profile_interests"). Do NOT add any content
+// table (posts/comments/chat/safety/...) here — those arrive in Phase 5+.
 //
 // Connection config moved out of this file in Prisma 7 — see
 // ../prisma.config.js and docs/adr/0010-prisma-7-driver-adapter.md.
@@ -35,6 +36,7 @@ model University {
   domains     UniversityDomain[]
   departments Department[]
   users       User[]
+  profiles    AnonymousProfile[]
 
   @@map("universities")
 }
@@ -60,7 +62,8 @@ model Department {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  university University @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  university University         @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  profiles   AnonymousProfile[]
 
   @@unique([universityId, name])
   @@index([universityId, sortOrder])
@@ -76,6 +79,8 @@ model Interest {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  profiles ProfileInterest[]
+
   @@index([isActive])
   @@map("interests")
 }
@@ -85,7 +90,9 @@ model Interest {
 // D8: no real_name/phone/student-ID columns anywhere below — only an
 // encrypted email plus an HMAC hash of it. Data never collected can't leak.
 
-/** Mirrors packages/shared/src/enums.js AccountStatus (§8.3 `users.status`). */
+/**
+ * Mirrors packages/shared/src/enums.js AccountStatus (§8.3 `users.status`).
+ */
 enum AccountStatus {
   ACTIVE
   RESTRICTED
@@ -97,7 +104,9 @@ enum AccountStatus {
   @@map("account_status")
 }
 
-/** Mirrors packages/shared/src/enums.js Platform. */
+/**
+ * Mirrors packages/shared/src/enums.js Platform.
+ */
 enum Platform {
   ANDROID
   IOS
@@ -105,7 +114,9 @@ enum Platform {
   @@map("platform")
 }
 
-/** Mirrors packages/shared/src/enums.js PushPreview (§8.3 `user_settings.push_preview`). */
+/**
+ * Mirrors packages/shared/src/enums.js PushPreview (§8.3 `user_settings.push_preview`).
+ */
 enum PushPreview {
   NONE
   SENDER_ONLY
@@ -135,10 +146,11 @@ model User {
   updatedAt       DateTime      @updatedAt @map("updated_at")
   deletedAt       DateTime?     @map("deleted_at")
 
-  university University    @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  university University        @relation(fields: [universityId], references: [id], onDelete: Restrict)
   identity   UserIdentity?
   sessions   Session[]
   settings   UserSetting?
+  profile    AnonymousProfile?
 
   @@index([universityId, status])
   @@map("users")
@@ -242,4 +254,89 @@ model UserSetting {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
+}
+
+// --- Phase 4: anonymous identity, profile & privacy settings ---
+// (docs/architecture.md §3.2, §8.3 "Persona", §11.6, §28 P4)
+//
+// V1 columns deliberately NOT here yet: bio, allow_discovery, looking_for,
+// skills (§8.4 "Post-MVP tables").
+
+/**
+ * Mirrors packages/shared/src/enums.js DmPolicy (§8.3 `anonymous_profiles.dm_policy`).
+ */
+enum DmPolicy {
+  EVERYONE
+  NOBODY
+
+  @@map("dm_policy")
+}
+
+/**
+ * The public persona (§3.2 "PUBLIC PERSONA"). `userId` is unique — one
+ * profile per account, ever (renames mutate this row; they never create
+ * a new one, so history lives in `ProfileNameHistory` instead).
+ * `animal`/`number` are kept alongside the composed `displayName` so a
+ * rename can regenerate one without re-parsing the other.
+ */
+model AnonymousProfile {
+  id             String   @id @default(uuid(7))
+  userId         String   @unique @map("user_id")
+  universityId   String   @map("university_id")
+  publicId       String   @unique @map("public_id")
+  animal         String
+  number         Int
+  displayName    String   @map("display_name")
+  avatarColor    String   @map("avatar_color")
+  departmentId   String?  @map("department_id")
+  semester       Int?
+  showDepartment Boolean  @default(true) @map("show_department")
+  showSemester   Boolean  @default(true) @map("show_semester")
+  showInterests  Boolean  @default(true) @map("show_interests")
+  dmPolicy       DmPolicy @default(EVERYONE) @map("dm_policy")
+  nameChangedAt  DateTime @default(now()) @map("name_changed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university  University           @relation(fields: [universityId], references: [id], onDelete: Restrict)
+  department  Department?          @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  interests   ProfileInterest[]
+  nameHistory ProfileNameHistory[]
+
+  @@unique([universityId, displayName])
+  @@index([universityId])
+  @@map("anonymous_profiles")
+}
+
+/**
+ * Every display name a profile has ever had — **admin only** (§8.3,
+ * §11.6 "prevents 'change name after harassment' evasion"). Never joined
+ * into anything a presenter reads.
+ */
+model ProfileNameHistory {
+  id          String   @id @default(uuid(7))
+  profileId   String   @map("profile_id")
+  displayName String   @map("display_name")
+  changedAt   DateTime @default(now()) @map("changed_at")
+
+  profile AnonymousProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("profile_name_history")
+}
+
+/**
+ * Join table: a profile's chosen interests (§8.3 "public if show_interests").
+ */
+model ProfileInterest {
+  profileId  String @map("profile_id")
+  interestId String @map("interest_id")
+
+  profile  AnonymousProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  interest Interest         @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, interestId])
+  @@index([interestId])
+  @@map("profile_interests")
 }

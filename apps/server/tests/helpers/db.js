@@ -19,6 +19,10 @@ const TABLES = [
   'users',
   'verification_challenges',
   'banned_email_hashes',
+  // Phase 4 (identity/profile):
+  'profile_name_history',
+  'profile_interests',
+  'anonymous_profiles',
 ];
 
 /**

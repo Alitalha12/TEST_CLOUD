@@ -122,3 +122,58 @@ export function createSession({
     },
   });
 }
+
+/**
+ * @param {{
+ *   userId: string;
+ *   universityId: string;
+ *   publicId?: string;
+ *   animal?: string;
+ *   number?: number;
+ *   displayName?: string;
+ *   avatarColor?: string;
+ *   departmentId?: string | null;
+ *   semester?: number | null;
+ *   showDepartment?: boolean;
+ *   showSemester?: boolean;
+ *   showInterests?: boolean;
+ *   dmPolicy?: 'EVERYONE' | 'NOBODY';
+ *   nameChangedAt?: Date;
+ * }} params
+ */
+export function createAnonymousProfile({
+  userId,
+  universityId,
+  publicId,
+  animal,
+  number,
+  displayName,
+  avatarColor,
+  departmentId,
+  semester,
+  showDepartment,
+  showSemester,
+  showInterests,
+  dmPolicy,
+  nameChangedAt,
+}) {
+  const suffix = uniqueSlug('');
+  return prisma.anonymousProfile.create({
+    data: {
+      userId,
+      universityId,
+      publicId: publicId ?? `p_test${suffix}`.slice(0, 20),
+      animal: animal ?? 'Fox',
+      number: number ?? 1234,
+      displayName: displayName ?? `Anonymous Fox #${suffix}`,
+      avatarColor: avatarColor ?? 'CORAL',
+      departmentId: departmentId ?? null,
+      semester: semester ?? null,
+      showDepartment: showDepartment ?? true,
+      showSemester: showSemester ?? true,
+      showInterests: showInterests ?? true,
+      dmPolicy: dmPolicy ?? 'EVERYONE',
+      nameChangedAt: nameChangedAt ?? new Date(),
+    },
+  });
+}
