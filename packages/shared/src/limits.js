@@ -92,6 +92,28 @@ export const CONTENT_LIMITS = Object.freeze({
   DISPLAY_NAME_RENAME_COOLDOWN_DAYS: 30,
 });
 
+/**
+ * §11.6 "Onboarding offers 3 generated options" and §8.3 `anonymous_profiles`
+ * (semester, profile_interests). Not rate limits (no per-user cost to
+ * abuse) — just fixed shape/size rules for the profiles module (P4).
+ */
+export const PROFILE_LIMITS = Object.freeze({
+  IDENTITY_OPTIONS_COUNT: 3,
+  // How long a generated batch of options stays choosable before the
+  // client must request a fresh one (regenerate) — long enough to read
+  // three names and a color, short enough that a stale set can't be
+  // replayed much later.
+  IDENTITY_OPTIONS_TTL_SECONDS: 15 * 60,
+  // Retries when a candidate "Anonymous {Animal} #{Number}" collides
+  // with an existing display_name in the same university (§11.6 "retry
+  // on unique violation") before giving up and surfacing a 500 — this
+  // should never realistically happen with ~60 animals × 9000 numbers.
+  IDENTITY_GENERATION_MAX_ATTEMPTS: 20,
+  MAX_INTERESTS_PER_PROFILE: 8,
+  SEMESTER_MIN: 1,
+  SEMESTER_MAX: 12,
+});
+
 export const MEDIA_LIMITS = Object.freeze({
   IMAGE_MAX_UPLOAD_BYTES: 10 * 1024 * 1024, // 10 MB
   IMAGE_MAX_INPUT_MEGAPIXELS: 40,

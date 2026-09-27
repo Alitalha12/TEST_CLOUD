@@ -140,5 +140,23 @@ export const PushPreview = freezeEnum(['NONE', 'SENDER_ONLY']);
 /** DM policy on a profile. §8.3 `anonymous_profiles.dm_policy`. */
 export const DmPolicy = freezeEnum(['EVERYONE', 'NOBODY']);
 
+/**
+ * Avatar color token. §11.6 "avatar illustration + chosen color" —
+ * chosen at identity-pick time (P4). A token, not a hex value: mobile
+ * (the only consumer that renders pixels) owns the hex-per-token mapping
+ * in its theme, so this stays a presentation-free contract like every
+ * other enum here.
+ */
+export const AvatarColorToken = freezeEnum([
+  'CORAL',
+  'AMBER',
+  'MOSS',
+  'TEAL',
+  'SLATE',
+  'INDIGO',
+  'VIOLET',
+  'ROSE',
+]);
+
 /** Admin role. §19 Admin Architecture. */
 export const AdminRole = freezeEnum(['MODERATOR', 'SENIOR_MODERATOR', 'SUPER_ADMIN']);

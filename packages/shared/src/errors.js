@@ -44,6 +44,22 @@ export const ERROR_CODES = Object.freeze({
     httpStatus: 413,
     defaultMessage: 'The request body is too large.',
   },
+  PROFILE_REQUIRED: {
+    httpStatus: 403,
+    defaultMessage: 'Finish setting up your profile first.',
+  },
+  PROFILE_OPTIONS_EXPIRED: {
+    httpStatus: 422,
+    defaultMessage: 'Your generated name options have expired. Request new ones.',
+  },
+  INVALID_PROFILE_OPTION: {
+    httpStatus: 422,
+    defaultMessage: "That isn't one of your generated options.",
+  },
+  RENAME_TOO_SOON: {
+    httpStatus: 429,
+    defaultMessage: 'You can only rename once every 30 days.',
+  },
   INTERNAL: { httpStatus: 500, defaultMessage: 'Something went wrong. Please try again.' },
 });
 
