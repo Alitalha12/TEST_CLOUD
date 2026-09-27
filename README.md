@@ -12,9 +12,10 @@ university email but stay pseudonymous to other students.
 This repo is being built **phase by phase** (see `docs/architecture.md`
 §28). Completed: **Phase 0** (repository & tooling), **Phase 1** (backend
 foundation), **Phase 2** (mobile foundation), **Phase 3** (authentication —
-see `docs/phases/phase-3-auth.md`). See [`PROGRESS.md`](./PROGRESS.md) for
-exactly where things stand and how to resume. Next up: **Phase 4**
-(anonymous identity & profile).
+see `docs/phases/phase-3-auth.md`), **Phase 4** (anonymous identity &
+profile — see `docs/phases/phase-4-identity.md`). See
+[`PROGRESS.md`](./PROGRESS.md) for exactly where things stand and how to
+resume. Next up: **Phase 5** (safety primitives).
 
 ## Prerequisites
 
@@ -66,7 +67,7 @@ pnpm docker:logs        # tail local infra logs
 
 ```
 apps/
-  mobile/     # Expo app — foundation (Phase 2) + auth screens (Phase 3)
+  mobile/     # Expo app — foundation (Phase 2) + auth (Phase 3) + onboarding/profile (Phase 4)
   server/     # Express API + BullMQ worker (worker.js). Socket.IO lands
               # in Phase 8. See apps/server/README.md.
   admin/      # Next.js admin dashboard — scaffolded in Phase 10
